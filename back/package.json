@@ -1,0 +1,30 @@
+{
+  "name": "todo-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": " node --watch src/index.js",
+    "start": "node src/index.js",
+    "migrate": "prisma migrate dev --name init",
+    "generate": "prisma generate",
+    "test": "NODE_OPTIONS=--experimental-vm-modules NODE_ENV=test jest --detectOpenHandles --forceExit",
+    "test:watch": "NODE_OPTIONS=--experimental-vm-modules NODE_ENV=test jest --watchAll"
+  },
+  "dependencies": {
+    "@prisma/client": "5.22.0",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "express-validator": "^7.3.1",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.0.2"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^30.2.0",
+    "prisma": "5.22.0",
+    "supertest": "^7.1.4"
+  }
+}

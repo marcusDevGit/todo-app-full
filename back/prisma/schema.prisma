@@ -1,0 +1,74 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+
+  tasks Task[]
+}
+
+model Task {
+  id          Int       @id @default(autoincrement())
+  title       String
+  description String?
+  dueDate     DateTime?
+  status      String    @default("pending")
+  priority    Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id])
+
+  tags        TaskTag[]
+  attachments Attachment[]
+  subtasks    Task[]       @relation("Subtasks")
+  parentId    Int?         @map("parent_task_id")
+  parent      Task?        @relation("Subtasks", fields: [parentId], references: [id])
+}
+
+model Tag {
+  id    Int     @id @default(autoincrement())
+  name  String
+  color String?
+
+  tasks TaskTag[]
+}
+
+model TaskTag {
+  taskId Int
+  tagId  Int
+
+  task Task @relation(fields: [taskId], references: [id])
+  tag  Tag  @relation(fields: [tagId], references: [id])
+
+  @@id([taskId, tagId])
+}
+
+model Attachment {
+  id        Int      @id @default(autoincrement())
+  filename  String
+  url       String
+  size      Int
+  mime      String
+  createdAt DateTime @default(now())
+
+  taskId Int
+  task   Task @relation(fields: [taskId], references: [id])
+}

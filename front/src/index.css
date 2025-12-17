@@ -184,7 +184,7 @@
 
 @layer components {
   .glass-card {
-    @apply bg-white/95 backdrop-blur-xl rounded-xl borde border-white/30 shadow-lg transition-all duration-300;
+    @apply bg-white/95 backdrop-blur-xl rounded-xl border border-white/30 shadow-lg transition-all duration-300;
   }
 
   .glass-card:hover {

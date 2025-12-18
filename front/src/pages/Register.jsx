@@ -27,28 +27,32 @@ const Register = () => {
     setLoading(true);
     setError("");
 
-    const result = await register(name, email, password);
-    if (result.success) {
-      navigate("/dashboard");
-    } else {
-      setError(result.error);
+    try {
+      const result = await register(name, email, password);
+      if (result.success) {
+        navigate("/dashboard");
+      } else {
+        setError(result.error);
+      }
+    } catch {
+      setError("Erro inesperado. Tente novamente.");
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl text-center">Registro</CardTitle>
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <Card className="w-full max-w-md glass-card animate-fade-in">
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl gradient-text">Registro</CardTitle>
           <CardDescription className="text-center">
             Crie sua conta
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="name">Nome</Label>
               <Input
                 id="name"
@@ -57,9 +61,10 @@ const Register = () => {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Seu Nome"
                 required
+                className="bg-background/50"
               />
             </div>
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -68,10 +73,11 @@ const Register = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
                 required
+                className="bg-background/50"
               />
             </div>
 
-            <div>
+            <div className="space-y-2">
               <Label htmlFor="password">Senha</Label>
               <Input
                 id="password"
@@ -80,19 +86,27 @@ const Register = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Sua senha"
                 required
+                className="bg-background/50"
               />
             </div>
-            {error && <div className="text-red-600 text-sm">{error}</div>}
-            <Button type="submit" className="w-full " disabled={loading}>
+            {error && (
+              <div className="text-destructive text-sm bg-destructive/10 p-3 rounded-md">
+                {error}
+              </div>
+            )}
+            <Button
+              type="submit"
+              className="w-full bg-gradient-to-r hover:from-primary to-blue-500 hover:to-blue-500/90"
+              disabled={loading}
+            >
               {loading ? "Criando conta..." : "Criar conta"}
             </Button>
           </form>
 
           <div className="mt-4 text-center">
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-muted-foreground">
               Já tem conta?{""}
-              <Link to="/login" className="text-blue-600 hover:underline">
-                {" "}
+              <Link to="/login" className="text-primary hover:underline">
                 Faça Login
               </Link>
             </span>

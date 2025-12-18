@@ -9,6 +9,6 @@ export const ROUTES = {
 
 export const TASK_STATUS = {
   PENDING: "pending",
-  IN_PROGRESS: "in progress",
+  IN_PROGRESS: "in_progress",
   COMPLETED: "competed",
 };

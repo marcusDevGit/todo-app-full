@@ -43,13 +43,13 @@ const TaskList = ({
                 }}
                 className="p-0 h-auto hover:bg-transparent"
               >
-                {/* <Star
+                <Star
                   className={`w-4 h-4 ${
                     task.important
                       ? "fill-yellow-400 text-yellow-400"
                       : "text-gray-400 hover:text-yellow-400"
                   }`}
-                /> */}
+                />
               </Button>
               <Button
                 variant="ghost"

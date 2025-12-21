@@ -10,11 +10,11 @@ import TaskDetails from "@/components/TaskDetails";
 import { taskService } from "@/services/taskService";
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, loading: authLoading } = useAuth();
   const { addToast } = useToast();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [activeView, setActiveView] = useState(tasks);
+  const [activeView, setActiveView] = useState("tasks");
   const [showSidebar, setShowSidebar] = useState(true);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -25,12 +25,14 @@ const Dashboard = () => {
       setTasks(response.data.data);
     } catch (error) {
       console.error("Erro ao caregar tarefas:", error);
-      addToast("Erro ao caregar tarefas:", error);
+      addToast("Erro ao caregar tarefas:", "error");
     }
   };
   useEffect(() => {
-    loadTasks();
-  });
+    if (!authLoading && user) {
+      loadTasks();
+    }
+  }, [authLoading, user]);
 
   const handleCreateTask = async (data) => {
     setLoading(true);
@@ -39,12 +41,11 @@ const Dashboard = () => {
         title: data.title,
         status: "pending",
       });
-      console.log("Anttes do toast");
       addToast("Tarefa criada com sucesso!", "success");
       loadTasks();
     } catch (error) {
       console.error("Erro ao criar a tarefa:", error);
-      addToast("Erro ao criar a tarefa:", error);
+      addToast("Erro ao criar a tarefa:", "error");
     } finally {
       setLoading(false);
     }
@@ -61,7 +62,7 @@ const Dashboard = () => {
       loadTasks();
     } catch (error) {
       console.error("Erro ao atualizar status da tarefa", error);
-      addToast("Erro ao atualizar status da tarefa", error);
+      addToast("Erro ao atualizar status da tarefa", "error");
     }
   };
 
@@ -78,7 +79,7 @@ const Dashboard = () => {
       loadTasks();
     } catch (error) {
       console.error("Erro ao marca com importante:", error);
-      addToast("Erro ao marca com importante:", error);
+      addToast("Erro ao marca com importante:", "error");
     }
   };
 
@@ -92,7 +93,7 @@ const Dashboard = () => {
       setSelectedTask(null);
     } catch (error) {
       console.error("Erro ao deletar tarefa:", error);
-      addToast("Erro ao deletar tarefa:", error);
+      addToast("Erro ao deletar tarefa:", "error");
     }
   };
 
@@ -102,7 +103,7 @@ const Dashboard = () => {
     switch (activeView) {
       case "today":
         return tasks.filter(
-          (t) => new Date(t.createAt).toDateString() === today
+          (t) => new Date(t.createdAt).toDateString() === today
         );
       case "important":
         return tasks.filter((t) => t.important);
@@ -115,9 +116,20 @@ const Dashboard = () => {
     }
   };
 
-  const FilteredTasks = getFilteredTasks();
-  const activeTasks = tasks.filter((t) => t.status !== "completed");
-  const completedTasks = tasks.filter((t) => t.status === "completed");
+  const filteredTasks = getFilteredTasks();
+  const activeTasks = filteredTasks.filter((t) => t.status !== "completed");
+  const completedTasks = filteredTasks.filter((t) => t.status === "completed");
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen">
@@ -168,7 +180,7 @@ const Dashboard = () => {
             </div>
             <TaskForm onsubmit={handleCreateTask} loading={loading} />
             <TaskList
-              tasks={tasks}
+              tasks={filteredTasks}
               onToggleStatus={toggleTaskStatus}
               onToggleImportant={handleToggleImportant}
               onDelete={handleDeleteTask}

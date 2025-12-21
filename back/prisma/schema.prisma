@@ -30,6 +30,7 @@ model Task {
   dueDate     DateTime?
   status      String    @default("pending")
   priority    Int       @default(0)
+  important   Boolean   @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 

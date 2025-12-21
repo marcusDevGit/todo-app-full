@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Home,
   Star,
@@ -24,13 +24,16 @@ const Sidebar = ({
   user,
   logout,
 }) => {
-  const menuItems = [
-    { id: "today", icon: Sun, label: "O Meu Dia", count: 0 },
-    { id: "important", icon: Star, label: "Importante", count: 0 },
-    { id: "planned", icon: Calendar, label: "Planejado", count: 0 },
-    { id: "assigned", icon: CheckSquare, label: "Atribuido a mim", count: 0 },
-    { id: "tasks", icon: Home, label: "Tarefas", count: 0 },
-  ];
+  const menuItems = useMemo(
+    () => [
+      { id: "today", icon: Sun, label: "O Meu Dia", count: 0 },
+      { id: "important", icon: Star, label: "Importante", count: 0 },
+      { id: "planned", icon: Calendar, label: "Planejado", count: 0 },
+      { id: "assigned", icon: CheckSquare, label: "Atribuido a mim", count: 0 },
+      { id: "tasks", icon: Home, label: "Tarefas", count: 0 },
+    ],
+    []
+  );
 
   const handleItemClick = (id) => {
     setActiveView?.(id);
@@ -61,6 +64,7 @@ const Sidebar = ({
               size="sm"
               onClick={() => setShowSidebar?.(!showSidebar)}
               className="hover:bg-sidebar-accent"
+              aria-label="Toggle sidebar"
             >
               <Menu className="w-5 h-5" />
             </Button>
@@ -68,6 +72,7 @@ const Sidebar = ({
               variant="ghost"
               size="sm"
               className="hover:bg-sidebar-accent"
+              aria-label="Settings"
             >
               <Settings className="w-5 h-5" />
             </Button>
@@ -79,77 +84,88 @@ const Sidebar = ({
               Designed by Slandio Soares
             </p>
           </div>
-          <nav className="flex-1 p-4 overflow-y-auto scroll-thin">
-            <div className="space-y-1">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeView === item.id;
+        </div>
+        <nav className="flex-1 p-4 overflow-y-auto scroll-thin">
+          <div className="space-y-1">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeView === item.id;
 
-                return (
-                  <Button
-                    key={item.id}
-                    variant={isActive ? "secondary" : "ghost"}
-                    onClick={() => handleItemClick(item.id)}
+              return (
+                <Button
+                  key={item.id}
+                  variant={isActive ? "secondary" : "ghost"}
+                  onClick={() => handleItemClick(item.id)}
+                  className={cn(
+                    "w-full justify-start gap-3 h-12 transition-all duration-200",
+                    isActive &&
+                      "hover:bg-sidebar-accent border-l-4 border-primary shadow-sm",
+                    !isActive && "hover:bg-sidebar-accent hover:translate-x-1"
+                  )}
+                >
+                  <Icon
                     className={cn(
-                      "w-full justify-start gap-3 h-12 transition-all duration-200",
-                      isActive &&
-                        "hover:bg-sidebar-accent border-l-4 border-primary shadow-sm",
-                      !isActive && "hover:bg-sidebar-accent hover:translate-x-1"
+                      "w-5 h-5 transition-colors",
+                      isActive ? "text-primary" : "text-sidebar-foreground"
                     )}
-                  >
-                    <Icon
-                      className={cn(
-                        "w-5 h-5 transition-colors",
-                        isActive ? "text-primary" : "text-sidebar-foreground"
-                      )}
-                    />
-                    <span className="flex-1 text-left font-medium">
-                      {item.label}
+                  />
+                  <span className="flex-1 text-left font-medium">
+                    {item.label}
+                  </span>
+                  {item.count > 0 && (
+                    <span className="px-2 py-1 text-xs font-semibold bg-primary/10 text-primary rounded-b-full">
+                      {item.count}
                     </span>
-                    {item.count > 0 && (
-                      <span className="px-2 py-1 text-xs font-semibold bg-primary/10 text-primary rounded-b-full">
-                        {item.count}
-                      </span>
-                    )}
-                  </Button>
-                );
-              })}
-            </div>
-          </nav>
-
-          <div className="p-4 border-t border-sidebar-border space-y-2">
-            <Button
-              variant="ghost"
-              className="w-full justify-start gap-3 text-primary"
-            >
-              <Plus className="w-5 h-5" />
-              Nova Lista
-            </Button>
-
-            <div className="flex items-center gap-3 p-3 bg-sidebar-accent rounded-lg">
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                <User className="w-4 h-4 text-primary-foreground" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-muted-foreground truncate">
-                  {user?.name || user?.email}
-                </p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {user?.email}
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              className="w-full justify-start gap-3 text-destructive hover:bg-destructive/10"
-              onClick={logout}
-            >
-              <LogOut className="w-5 h-5" />
-              Sair
-            </Button>
+                  )}
+                </Button>
+              );
+            })}
           </div>
+        </nav>
+
+        <div className="p-4 border-t border-sidebar-border space-y-2">
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 text-primary"
+          >
+            <Plus className="w-5 h-5" />
+            Nova Lista
+          </Button>
+
+          <div className="flex items-center gap-3 p-3 bg-sidebar-accent rounded-lg">
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+              <User className="w-4 h-4 text-primary-foreground" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-muted-foreground truncate">
+                {user?.name || user?.email}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {user?.email}
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-3 text-destructive hover:bg-destructive/10"
+            onClick={logout}
+          >
+            <LogOut className="w-5 h-5" />
+            Sair
+          </Button>
         </div>
       </div>
+      {!showSidebar && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowSidebar?.(true)}
+          className="hidden lg:flex fixed left-0 top-6 z-30 hover:bg-sidebar-accent"
+          aria-label="Open sidebar"
+        >
+          <Menu className="w-5 h-5" />
+        </Button>
+      )}
     </>
   );
 };

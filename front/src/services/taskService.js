@@ -8,4 +8,6 @@ export const taskService = {
   updateTask: (id, data) => api.put(`/tasks/${id}`, data),
 
   deleteTask: (id) => api.delete(`/tasks/${id}`),
+  getSubtasks: (id) => api.get(`/tasks/${id}/subtasks`),
+  createSubtask: (id, data) => api.post(`/tasks/${id}/subtasks`, data),
 };

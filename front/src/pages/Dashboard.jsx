@@ -193,6 +193,7 @@ const Dashboard = () => {
         <TaskDetails
           task={selectedTask}
           onClose={() => setSelectedTask(null)}
+          onUpdate={loadTasks}
         />
       )}
     </div>

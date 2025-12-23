@@ -1,17 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { X, Calendar, AlertCircle, Edit2 } from "lucide-react";
+import { X, Calendar, AlertCircle, Edit2, ChevronDown } from "lucide-react";
 import TaskEditForm from "./TaskEditForm";
+import SubTarefaForm from "./SubtaskForm";
+import SubTaskList from "./SubtaskList";
 import { taskService } from "@/services/taskService";
 import { useToast } from "@/hooks/useToast";
 
 const TaskDetails = ({ task, onClose, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [subtasks, setSubtasks] = useState(task.subtasks || []);
+  const [showSubtasks, setShowSubtasks] = useState(false);
   const { addToast } = useToast();
 
-  if (!task) return null;
+  useEffect(() => {
+    setSubtasks(task.subtasks || []);
+  }, [task]);
 
   const handleSave = async (data) => {
     setLoading(true);
@@ -27,6 +33,49 @@ const TaskDetails = ({ task, onClose, onUpdate }) => {
       setLoading(false);
     }
   };
+
+  const handleCreateSubTask = async (data) => {
+    setLoading(true);
+    try {
+      await taskService.createSubtask(task.id, data);
+      addToast("Subtarefa criada com sucesso", "success");
+      onUpdate();
+    } catch (error) {
+      console.error("Erro ao criar subtarefa:", error);
+      addToast("Erro ao criar subtarefa:", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggleSubtaskStatus = async (subtask) => {
+    try {
+      const newStatus =
+        subtask.status === "completed" ? "pending" : "completed";
+      await taskService.updateTask(subtask.id, { status: newStatus });
+      setSubtasks(
+        subtasks.map((st) =>
+          st.id === subtask.id ? { ...st, status: newStatus } : st
+        )
+      );
+    } catch (error) {
+      console.error("Error updating subtask status:", error);
+      addToast("Erro ao atualizar o status da subtarefa", "error");
+    }
+  };
+
+  const handleDeleteSubtask = async (subtask) => {
+    if (!window.confirm("Deletar esta subtarefa?")) return;
+    try {
+      await taskService.deleteTask(subtask.id);
+      addToast("Subtarefa deletada com sucesso", "success");
+      setSubtasks(subtasks.filter((st) => st.id !== subtask.id));
+    } catch (error) {
+      console.error("Error ao deletar subtarefa:", error);
+      addToast("Erro ao deletar subtarefa", "error");
+    }
+  };
+  if (!task) return null;
 
   if (isEditing) {
     return (
@@ -91,6 +140,42 @@ const TaskDetails = ({ task, onClose, onUpdate }) => {
               Status: {task.status === "comleted" ? "Concluída" : "Pendente"}
             </span>
           </div>
+
+          {subtasks.length > 0 && (
+            <div className="mt-4 space-y-3">
+              <Button
+                variant="ghost"
+                onClick={() => setShowSubtasks(!showSubtasks)}
+                className="w-full justify-between text-sm font-medium"
+              >
+                <span> Subtarefas ({subtasks.length})</span>
+                <ChevronDown
+                  className={`w-4 h-4 transition-transform ${
+                    showSubtasks ? "rotate-180" : ""
+                  }`}
+                />
+              </Button>
+              {showSubtasks && (
+                <div className="mt-3 space-y-3">
+                  <SubTarefaForm
+                    onSubmit={handleCreateSubTask}
+                    loading={loading}
+                  />
+                  <SubTaskList
+                    subtasks={subtasks}
+                    onToggleStatus={handleToggleSubtaskStatus}
+                    onDelete={handleDeleteSubtask}
+                    loading={loading}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="border-t pt-4 space-y-3">
+            <SubTarefaForm onSubmit={handleCreateSubTask} loading={loading} />
+          </div>
+
           <Button variant="outline" className="w-full" onClick={onClose}>
             Fechar
           </Button>

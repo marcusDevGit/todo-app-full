@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Circle, CheckCircle2, Star, Trash2, Car } from "lucide-react";
+import { Circle, CheckCircle2, Star, Trash2 } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 
 const TaskList = ({
@@ -12,63 +12,87 @@ const TaskList = ({
   const activeTasks = tasks.filter((t) => t.status !== "completed");
   const completedTasks = tasks.filter((t) => t.status === "completed");
 
+  const getProgressPercentage = (task) => {
+    if (!task.subtasks || task.subtasks.length === 0) return 0;
+    const completedSubtasks = task.subtasks.filter(
+      (st) => st.status === "completed"
+    ).length;
+    return Math.round((completedSubtasks / task.subtasks.length) * 100);
+  };
+
   return (
     <div className="space-y-3">
-      {activeTasks.map((task) => (
-        <Card
-          key={task.id}
-          className="glass-card animate-fade-in hover:shadow-lg transition-all"
-          onClick={() => onSelectTask?.(task)}
-        >
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleStatus(task);
-                }}
-                className="p-0 h-auto hover:bg-transparent"
-              >
-                <Circle className="w-5 h-5 text-primary hover:text-primary/80" />
-              </Button>
-              <span className="flex-1 font-medium">{task.title}</span>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleImportant(task);
-                }}
-                className="p-0 h-auto hover:bg-transparent"
-              >
-                <Star
-                  className={`w-4 h-4 ${
-                    task.important
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "text-gray-400 hover:text-yellow-400"
-                  }`}
-                />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(task);
-                }}
-                className="p-9 h-auto hover:bg-transparent"
-              >
-                <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
-              </Button>
-              <span className="text-xs text-muted-foreground">
-                {new Date(task.createdAt).toLocaleDateString()}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+      {activeTasks.map((task) => {
+        const progress = getProgressPercentage(task);
+        return (
+          <Card
+            key={task.id}
+            className="glass-card animate-fade-in hover:shadow-lg transition-all"
+            onClick={() => onSelectTask?.(task)}
+          >
+            <CardContent className="p-4 space-y-2">
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleStatus(task);
+                  }}
+                  className="p-0 h-auto hover:bg-transparent"
+                >
+                  <Circle className="w-5 h-5 text-primary hover:text-primary/80" />
+                </Button>
+                <span className="flex-1 font-medium">{task.title}</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleImportant(task);
+                  }}
+                  className="p-0 h-auto hover:bg-transparent"
+                >
+                  <Star
+                    className={`w-4 h-4 ${
+                      task.important
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "text-gray-400 hover:text-yellow-400"
+                    }`}
+                  />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(task);
+                  }}
+                  className="p-9 h-auto hover:bg-transparent"
+                >
+                  <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  {new Date(task.createdAt).toLocaleDateString()}
+                </span>
+              </div>
+              {progress > 0 && (
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-primary to-blue-500 transition-all"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {progress}%
+                  </span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })}
 
       {completedTasks.length > 0 && (
         <div className="mt-8 space-y-3">

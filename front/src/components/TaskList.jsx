@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Circle, CheckCircle2, Star, Trash2 } from "lucide-react";
+import { Circle, CheckCircle2, Star, Trash2, Calendar } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 
 const TaskList = ({
@@ -20,10 +20,34 @@ const TaskList = ({
     return Math.round((completedSubtasks / task.subtasks.length) * 100);
   };
 
+  const isOverdue = (dueDate) => {
+    if (!dueDate) return false;
+
+    const dueTime = new Date(dueDate).getTime();
+    const todayTime = new Date().setHours(0, 0, 0, 0);
+    return dueTime < todayTime;
+  };
+
+  const formatDueDate = (dueDate) => {
+    if (!dueDate) return null;
+    const dateStr = dueDate.split("T")[0];
+    const [year, month, day] = dateStr.split("-");
+    const date = new Date(year, month - 1, day);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    if (date.toDateString() === today.toDateString()) return "Hoje";
+    if (date.toDateString() === tomorrow.toDateString()) return "Amanhã";
+    return date.toLocaleDateString("pt-BR", { month: "short", day: "numeric" });
+  };
+
   return (
     <div className="space-y-3">
       {activeTasks.map((task) => {
         const progress = getProgressPercentage(task);
+        const overdue = isOverdue(task.dueDate);
         return (
           <Card
             key={task.id}
@@ -72,9 +96,16 @@ const TaskList = ({
                 >
                   <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
                 </Button>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(task.createdAt).toLocaleDateString()}
-                </span>
+                {task.dueDate && (
+                  <div
+                    className={`flex items-center gap-1 text-xs ${
+                      overdue ? "text-red-500" : "text-muted-foreground"
+                    }`}
+                  >
+                    <Calendar className="w-3 h-3" />
+                    <span>{formatDueDate(task.dueDate)}</span>
+                  </div>
+                )}
               </div>
               {progress > 0 && (
                 <div className="flex items-center gap-2">

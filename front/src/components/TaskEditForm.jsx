@@ -9,6 +9,9 @@ const TaskEditForm = ({ task, onSave, onCancel, loading = false }) => {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
   const [priority, setPriority] = useState(task.priority || 0);
+  const [dueDate, setDueDate] = useState(
+    task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : ""
+  );
   const [selectedTags, setSelectedTags] = useState(
     task.tags?.map((t) => t.tag) || []
   );
@@ -19,6 +22,7 @@ const TaskEditForm = ({ task, onSave, onCancel, loading = false }) => {
       title,
       description,
       priority: parseInt(priority),
+      dueDate: dueDate ? new Date(dueDate).toISOString() : null,
       tags: selectedTags.map((t) => t.name),
     });
   };
@@ -58,6 +62,15 @@ const TaskEditForm = ({ task, onSave, onCancel, loading = false }) => {
               <option value="2">Alta</option>
               <option value="3">Urgente</option>
             </select>
+          </div>
+          <div>
+            <label className="text-sm font-medium">Data de Vencimento</label>
+            <Input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="w-full"
+            />
           </div>
           <TagSelector
             selectedTags={selectedTags}

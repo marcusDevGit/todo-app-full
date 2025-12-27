@@ -92,6 +92,13 @@ const TaskDetails = ({ task, onClose, onUpdate }) => {
     );
   }
 
+  const parseLocalDate = (dateStr) => {
+    const [year, month, day] = dateStr.split("T")[0].split("-");
+    return new Date(year, month - 1, day);
+  };
+
+  const isOverdue = task.dueDate && parseLocalDate(task.dueDate) < new Date();
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-end lg:items-center justify-center p-4">
       <Card className=" w-full max-w-md glass-card animate-slide-in">
@@ -126,6 +133,18 @@ const TaskDetails = ({ task, onClose, onUpdate }) => {
               Criada em {new Date(task.createdAt).toLocaleDateString()}
             </span>
           </div>
+          {task.dueDate && (
+            <div
+              className={`flex items-center gap-2 text-sm ${
+                isOverdue ? "text-red-500" : "text-muted-foreground"
+              }`}
+            >
+              <Calendar className="w-4 h-4" />
+              <span>
+                Vencimento: {parseLocalDate(task.dueDate).toLocaleDateString()}
+              </span>
+            </div>
+          )}
           {task.description && (
             <div>
               <p className="text-sm font-medium mb-2">Descrição</p>

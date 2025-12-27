@@ -89,11 +89,22 @@ const TaskList = ({
                   </span>
                 </div>
               )}
+              {task.tags && task.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {task.tags.map((tagObj) => (
+                    <span
+                      key={tagObj.tag.id}
+                      className="px-2 py-1 text-xs bg-primary/10 rounded-full"
+                    >
+                      {tagObj.tag.name}
+                    </span>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         );
       })}
-
       {completedTasks.length > 0 && (
         <div className="mt-8 space-y-3">
           <h3 className="text-lg font-semibold flex items-center gap-2">

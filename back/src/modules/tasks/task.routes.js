@@ -8,6 +8,7 @@ const router = Router();
 
 router.use(auth);
 router.post("/", createTask, validate, controller.create);
+router.get("/search", controller.search);
 router.get("/", controller.getAll);
 router.get("/:id", controller.getById);
 router.put("/:id", updateTask, validate, controller.update);

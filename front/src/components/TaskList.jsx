@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Circle, CheckCircle2, Star, Trash2, Calendar } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
+import ReminderBadge from "./ReminderBadge";
+import { useEffect } from "react";
+import { toast } from "react-toastify";
 
 const TaskList = ({
   tasks = [],
@@ -22,26 +25,87 @@ const TaskList = ({
 
   const isOverdue = (dueDate) => {
     if (!dueDate) return false;
-
     const dueTime = new Date(dueDate).getTime();
-    const todayTime = new Date().setHours(0, 0, 0, 0);
+    const todayTime = new Date().setHours(23, 59, 59, 999);
     return dueTime < todayTime;
   };
 
   const formatDueDate = (dueDate) => {
     if (!dueDate) return null;
-    const dateStr = dueDate.split("T")[0];
-    const [year, month, day] = dateStr.split("-");
-    const date = new Date(year, month - 1, day);
+
+    const date = new Date(dueDate);
+    const localDate = new Date(
+      date.getTime() + date.getTimezoneOffset() * 60000
+    );
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    if (date.toDateString() === today.toDateString()) return "Hoje";
-    if (date.toDateString() === tomorrow.toDateString()) return "Amanhã";
-    return date.toLocaleDateString("pt-BR", { month: "short", day: "numeric" });
+    if (localDate.toDateString() === today.toDateString()) return "Hoje";
+    if (localDate.toDateString() === tomorrow.toDateString()) return "Amanhã";
+    return localDate.toLocaleDateString("pt-BR", {
+      month: "short",
+      day: "numeric",
+    });
   };
+
+  useEffect(() => {
+    const checkReminders = () => {
+      const now = new Date();
+      tasks.forEach((task) => {
+        if (task.reminderDate && task.reminderTime) {
+          const date = new Date(task.reminderDate);
+          const localDate = new Date(
+            date.getTime() + date.getTimezoneOffset() * 60000
+          );
+          const reminderDateTimeStr = `${
+            localDate.toISOString().split("T")[0]
+          }T${task.reminderTime}:00`;
+          const reminderTime = new Date(reminderDateTimeStr);
+          const timeDiff = reminderTime - now;
+          if (Math.abs(timeDiff) <= 10000) {
+            toast.info(`Lembrete: ${task.title}`, {
+              position: "top-right",
+              autoClose: 5000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              progress: undefined,
+              theme: "dark",
+            });
+            if (Notification.permission === "granted") {
+              new Notification(`Lembrete: ${task.title}`, {
+                body: "È hora de verificar sua tarefa!",
+                // icon: "/favicon.ico"
+                requireInteraction: true,
+                silent: false,
+                vibrate: [200, 100, 200],
+              });
+            } else if (Notification.permission !== "denied") {
+              Notification.requestPermission().then((permission) => {
+                if (permission === "granted") {
+                  new Notification(`Lembrete: ${task.title}`, {
+                    body: "È hora de verificar sua tarefa!",
+                    // icon: "/favicon.ico"
+                    requireInteraction: true,
+                    silent: false,
+                    vibrate: [200, 100, 200],
+                  });
+                }
+              });
+            }
+          }
+        }
+      });
+    };
+
+    const interval = setInterval(checkReminders, 10000);
+    checkReminders();
+    return () => clearInterval(interval);
+  }, [tasks]);
 
   return (
     <div className="space-y-3">
@@ -106,6 +170,9 @@ const TaskList = ({
                     <span>{formatDueDate(task.dueDate)}</span>
                   </div>
                 )}
+                {task.reminderDate && (
+                  <ReminderBadge reminderDate={task.reminderDate} />
+                )}
               </div>
               {progress > 0 && (
                 <div className="flex items-center gap-2">
@@ -126,6 +193,7 @@ const TaskList = ({
                     <span
                       key={tagObj.tag.id}
                       className="px-2 py-1 text-xs bg-primary/10 rounded-full"
+                      style={{ backgroundColor: tagObj.tag.color || "#3b82f6" }}
                     >
                       {tagObj.tag.name}
                     </span>

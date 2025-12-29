@@ -14,17 +14,18 @@ const TagSelector = ({ selectedTags = [], onTagsChange, loading = false }) => {
   const { addToast } = useToast();
 
   const colors = [
-    "bg-red-100 text-red-800",
-    "bg-blue-100 text-blue-800",
-    "bg-green-100 text-green-800",
-    "bg-yellow-100 text-yellow-800",
-    "bg-purple-100 text-purple-800",
-    "bg-pink-100 text-pink-800",
+    "#ef4444",
+    "#f97316",
+    "#eab308",
+    "#22c55e",
+    "#06b6d4",
+    "#8b5cf6",
+    "#ec4899",
+    "#6672d6",
+    "#c676b9",
+    "#d6d566",
+    "#ffafa3",
   ];
-
-  const getTagColor = (tagId) => {
-    return colors[tagId % colors.length];
-  };
 
   useEffect(() => {
     loadTags();
@@ -54,7 +55,8 @@ const TagSelector = ({ selectedTags = [], onTagsChange, loading = false }) => {
     if (!newTag.trim()) return;
     setTagLoading(true);
     try {
-      const response = await taskService.createTag({ name: newTag });
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      const response = await taskService.createTag({ name: newTag, color });
       const tag = response.data.data;
       handleAddTag(tag);
       setNewTag("");
@@ -80,6 +82,7 @@ const TagSelector = ({ selectedTags = [], onTagsChange, loading = false }) => {
           <div
             key={tag.id}
             className="flex items-center gap-1 px-2 py-1 bg-primary/10 rounded-full text-sm"
+            style={{ backgroundColor: tag.color || "#3b82f6" }}
           >
             <span>{tag.name}</span>
             <Button
@@ -105,7 +108,7 @@ const TagSelector = ({ selectedTags = [], onTagsChange, loading = false }) => {
           + Adicionar tag
         </Button>
         {showDropdown && (
-          <Card className="absolute top-full left-0 right-0 mt-1 z-10 glass-card">
+          <Card className="absolute top-full left-0 right-0 mt-1 z-10 glass-card max-h-48 overflow-y-auto">
             <CardContent className="p-2 space-y-2">
               <div className="flex gap-1">
                 <Input
@@ -129,19 +132,20 @@ const TagSelector = ({ selectedTags = [], onTagsChange, loading = false }) => {
                   +
                 </Button>
               </div>
-              {availableTags.map((tag) => (
-                <Button
-                  key={tag.id}
-                  type="button"
-                  onClick={() => handleAddTag(tag)}
-                  variant="ghost"
-                  className={`w-full justify-start text-sm ${getTagColor(
-                    tag.id
-                  )}`}
-                >
-                  {tag.name}
-                </Button>
-              ))}
+              <div className=" flex flex-wrap gap-2">
+                {availableTags.map((tag) => (
+                  <Button
+                    key={tag.id}
+                    type="button"
+                    onClick={() => handleAddTag(tag)}
+                    variant="ghost"
+                    className=" text-white text-sm"
+                    style={{ backgroundColor: tag.color || "#3b82f6" }}
+                  >
+                    {tag.name}
+                  </Button>
+                ))}
+              </div>
             </CardContent>
           </Card>
         )}

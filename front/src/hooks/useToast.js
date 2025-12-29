@@ -1,10 +1,16 @@
-import { useContext } from "react";
-import { ToastContext } from "@/context/Toast";
+import { toast } from "react-toastify";
 
 export const useToast = () => {
-  const context = useContext(ToastContext);
-  if (!context) {
-    throw new Error("useToast deve ser usado dentro de ToastProvider");
-  }
-  return context;
+  const addToast = (message, type = "success", duration = 3000) => {
+    toast[type](message, {
+      position: "top-right",
+      autoClose: duration,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    });
+  };
+
+  return { addToast };
 };

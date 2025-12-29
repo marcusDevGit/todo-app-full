@@ -7,12 +7,14 @@ import Sidebar from "@/components/Sidebar";
 import TaskForm from "@/components/TaskForm";
 import TaskList from "@/components/TaskList";
 import TaskDetails from "@/components/TaskDetails";
+import SearchFilter from "@/components/SearchFilter";
 import { taskService } from "@/services/taskService";
 
 const Dashboard = () => {
   const { user, logout, loading: authLoading } = useAuth();
   const { addToast } = useToast();
   const [tasks, setTasks] = useState([]);
+  const [allTags, setAllTags] = useState([]);
   const [loading, setLoading] = useState(false);
   const [activeView, setActiveView] = useState("tasks");
   const [showSidebar, setShowSidebar] = useState(true);
@@ -28,9 +30,34 @@ const Dashboard = () => {
       addToast("Erro ao caregar tarefas:", "error");
     }
   };
+
+  const loadTags = async () => {
+    try {
+      const response = await taskService.getTags();
+      setAllTags(response.data.data);
+    } catch (error) {
+      console.error("Erro ao caregar tags:", error);
+      addToast("Erro ao caregar tags:", " error");
+    }
+  };
+
+  const handleSearch = async (filters) => {
+    setLoading(true);
+    try {
+      const response = await taskService.search(filters);
+      setTasks(response.data.data);
+    } catch (error) {
+      console.error("Erro ao buscar tarefas:", error);
+      addToast("Erro ao buscar tarefas", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!authLoading && user) {
       loadTasks();
+      loadTags();
     }
   }, [authLoading, user]);
 
@@ -178,6 +205,7 @@ const Dashboard = () => {
                 </p>
               </div>
             </div>
+            <SearchFilter onSearch={handleSearch} tags={allTags} />
             <TaskForm onsubmit={handleCreateTask} loading={loading} />
             <TaskList
               tasks={filteredTasks}

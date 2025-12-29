@@ -19,6 +19,15 @@ export const getAll = async (req, res, next) => {
   }
 };
 
+export const search = async (req, res, next) => {
+  try {
+    const tasks = await service.search(req.user.id, req.query);
+    success(res, tasks);
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getById = async (req, res, next) => {
   try {
     const task = await service.getById(req.params.id, req.user.id);
@@ -33,6 +42,7 @@ export const update = async (req, res, next) => {
     const task = await service.update(req.params.id, req.user.id, req.body);
     success(res, task, "Tarefa atualizada com sucesso");
   } catch (error) {
+    console.error("update erro:", error.message);
     next(error);
   }
 };

@@ -28,6 +28,10 @@ model Task {
   title       String
   description String?
   dueDate     DateTime?
+  reminderDate DateTime?
+  reminderFrequency String? @default("once")
+  reminderTime String?
+  lastReminderSent DateTime?
   status      String    @default("pending")
   priority    Int       @default(0)
   important   Boolean   @default(false)
@@ -47,7 +51,7 @@ model Task {
 model Tag {
   id    Int     @id @default(autoincrement())
   name  String
-  color String?
+  color String? @default("#3b82f6")
 
   tasks TaskTag[]
 }

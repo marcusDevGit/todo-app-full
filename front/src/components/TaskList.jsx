@@ -1,8 +1,16 @@
 import { Button } from "@/components/ui/button";
-import { Circle, CheckCircle2, Star, Trash2, Calendar } from "lucide-react";
+import {
+  Circle,
+  CheckCircle2,
+  Star,
+  Trash2,
+  Calendar,
+  ChevronDown,
+  Edit2,
+} from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import ReminderBadge from "./ReminderBadge";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
 const TaskList = ({
@@ -11,9 +19,30 @@ const TaskList = ({
   onToggleImportant,
   onDelete,
   onSelectTask,
+  onToggleSubtask,
+  onEditTask,
 }) => {
+  const [expandedTasks, setExpandedTasks] = useState({});
+
   const activeTasks = tasks.filter((t) => t.status !== "completed");
   const completedTasks = tasks.filter((t) => t.status === "completed");
+
+  const toggleExpanded = (taskId) => {
+    setExpandedTasks((prev) => ({
+      ...prev,
+      [taskId]: !prev[taskId],
+    }));
+  };
+
+  const getPriorityColor = (priority) => {
+    const colors = {
+      0: "border-l-4 border-gray-400", // Baixa
+      1: "border-l-4 border-yellow-400", // Média
+      2: "border-l-4 border-orange-500", // Alta
+      3: "border-l-4 border-red-500",
+    };
+    return colors[priority] || colors[0];
+  };
 
   const getProgressPercentage = (task) => {
     if (!task.subtasks || task.subtasks.length === 0) return 0;
@@ -112,96 +141,172 @@ const TaskList = ({
       {activeTasks.map((task) => {
         const progress = getProgressPercentage(task);
         const overdue = isOverdue(task.dueDate);
+        const isExpanded = expandedTasks[task.id];
         return (
-          <Card
-            key={task.id}
-            className="glass-card animate-fade-in hover:shadow-lg transition-all"
-            onClick={() => onSelectTask?.(task)}
-          >
-            <CardContent className="p-4 space-y-2">
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleStatus(task);
-                  }}
-                  className="p-0 h-auto hover:bg-transparent"
-                >
-                  <Circle className="w-5 h-5 text-primary hover:text-primary/80" />
-                </Button>
-                <span className="flex-1 font-medium">{task.title}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleImportant(task);
-                  }}
-                  className="p-0 h-auto hover:bg-transparent"
-                >
-                  <Star
-                    className={`w-4 h-4 ${
-                      task.important
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-gray-400 hover:text-yellow-400"
-                    }`}
-                  />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onDelete(task);
-                  }}
-                  className="p-9 h-auto hover:bg-transparent"
-                >
-                  <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
-                </Button>
-                {task.dueDate && (
-                  <div
-                    className={`flex items-center gap-1 text-xs ${
-                      overdue ? "text-red-500" : "text-muted-foreground"
-                    }`}
+          <div key={task.id}>
+            <Card
+              className={`glass-card animate-fade-in hover:shadow-lg transition-all ${getPriorityColor(
+                task.priority
+              )}`}
+            >
+              <CardContent className="p-4 space-y-2">
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleStatus(task);
+                    }}
+                    className="p-0 h-auto hover:bg-transparent"
                   >
-                    <Calendar className="w-3 h-3" />
-                    <span>{formatDueDate(task.dueDate)}</span>
-                  </div>
-                )}
-                {task.reminderDate && (
-                  <ReminderBadge reminderDate={task.reminderDate} />
-                )}
-              </div>
-              {progress > 0 && (
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-primary to-blue-500 transition-all"
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {progress}%
-                  </span>
-                </div>
-              )}
-              {task.tags && task.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {task.tags.map((tagObj) => (
-                    <span
-                      key={tagObj.tag.id}
-                      className="px-2 py-1 text-xs bg-primary/10 rounded-full"
-                      style={{ backgroundColor: tagObj.tag.color || "#3b82f6" }}
+                    <Circle className="w-5 h-5 text-primary hover:text-primary/80" />
+                  </Button>
+
+                  {task.subtasks && task.subtasks.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleExpanded(task.id);
+                      }}
+                      className="p-0 h-auto"
                     >
-                      {tagObj.tag.name}
-                    </span>
-                  ))}
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform ${
+                          isExpanded ? "rotate-180" : ""
+                        }`}
+                      />
+                    </Button>
+                  )}
+
+                  <span className="flex-1 font-medium">{task.title}</span>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleImportant(task);
+                    }}
+                    className="p-0 h-auto hover:bg-transparent"
+                  >
+                    <Star
+                      className={`w-4 h-4 ${
+                        task.important
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-gray-400 hover:text-yellow-400"
+                      }`}
+                    />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditTask?.(task);
+                    }}
+                    className="p-0 h-auto hover:bg-transparent"
+                  >
+                    <Edit2 className="w-4 h-4 text-gray-400 hover:text-primary" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(task);
+                    }}
+                    className="p-9 h-auto hover:bg-transparent"
+                  >
+                    <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
+                  </Button>
+                  {task.dueDate && (
+                    <div
+                      className={`flex items-center gap-1 text-xs ${
+                        overdue ? "text-red-500" : "text-muted-foreground"
+                      }`}
+                    >
+                      <Calendar className="w-3 h-3" />
+                      <span>{formatDueDate(task.dueDate)}</span>
+                    </div>
+                  )}
+                  {task.reminderDate && (
+                    <ReminderBadge reminderDate={task.reminderDate} />
+                  )}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+                {isExpanded && task.description && (
+                  <div className="text-sm text-muted-foreground">
+                    {task.description}
+                  </div>
+                )}
+                {progress > 0 && (
+                  <div className="flex items-center gap-2 pl-7">
+                    <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-primary to-blue-500 transition-all"
+                        style={{ width: `${progress}%` }}
+                      />
+                    </div>
+                    <span className="text-xs text-muted-foreground">
+                      {progress}%
+                    </span>
+                  </div>
+                )}
+                {task.tags && task.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {task.tags.map((tagObj) => (
+                      <span
+                        key={tagObj.tag.id}
+                        className="px-2 py-1 text-xs bg-primary/10 rounded-full"
+                        style={{
+                          backgroundColor: tagObj.tag.color || "#3b82f6",
+                        }}
+                      >
+                        {tagObj.tag.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {isExpanded && task.subtasks && task.subtasks.length > 0 && (
+                  <div className="mt-3 space-y-2 border-t pt-3 pl-7">
+                    {task.subtasks.map((subtask) => (
+                      <div
+                        key={subtask.id}
+                        className="flex items-center gap-2 text-sm"
+                      >
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleSubtask?.(subtask);
+                          }}
+                          className="p-0 h-auto hover:bg-transparent"
+                        >
+                          {subtask.status === "completed" ? (
+                            <CheckCircle2 className="w-4 h-4 text-primary" />
+                          ) : (
+                            <Circle className="w-4 h-4 text-gray-400" />
+                          )}
+                        </Button>
+                        <span
+                          className={
+                            subtask.status === "completed"
+                              ? "line-through text-muted-foreground"
+                              : ""
+                          }
+                        >
+                          {subtask.title}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         );
       })}
       {completedTasks.length > 0 && (
@@ -216,7 +321,6 @@ const TaskList = ({
             <Card
               key={task.id}
               className="glass-card animate-fade-in opacity-75 hover:opacity-90 transition-all"
-              onClick={() => onSelectTask?.(task)}
             >
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">

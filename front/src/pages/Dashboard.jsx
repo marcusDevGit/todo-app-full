@@ -7,8 +7,10 @@ import Sidebar from "@/components/Sidebar";
 import TaskForm from "@/components/TaskForm";
 import TaskList from "@/components/TaskList";
 import TaskDetails from "@/components/TaskDetails";
+import TaskEditForm from "@/components/TaskEditForm";
 import SearchFilter from "@/components/SearchFilter";
 import { taskService } from "@/services/taskService";
+import { set } from "zod";
 
 const Dashboard = () => {
   const { user, logout, loading: authLoading } = useAuth();
@@ -20,6 +22,7 @@ const Dashboard = () => {
   const [showSidebar, setShowSidebar] = useState(true);
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
+  const [editingTask, setEditingTask] = useState(null);
 
   const loadTasks = async () => {
     try {
@@ -111,7 +114,6 @@ const Dashboard = () => {
   };
 
   const handleDeleteTask = async (task) => {
-    // eslint-disable-next-line no-alert
     if (!window.confirm("Tem certeza que deseja deletar esta tarefa?")) return;
     try {
       await taskService.deleteTask(task.id);
@@ -121,6 +123,39 @@ const Dashboard = () => {
     } catch (error) {
       console.error("Erro ao deletar tarefa:", error);
       addToast("Erro ao deletar tarefa:", "error");
+    }
+  };
+
+  const handleToggleSubtask = async (subtask) => {
+    try {
+      const newStatus =
+        subtask.status === "completed" ? "pending" : "completed";
+      await taskService.updateTask(subtask.id, { status: newStatus });
+      addToast(
+        newStatus === "completed"
+          ? "Subtarefa concluida!"
+          : "Subtarefa reaberta",
+        "success"
+      );
+      loadTasks();
+    } catch (error) {
+      console.error("Erro ao atualizar subtarefas:", error);
+      addToast("Erro ao atualizar subtarefas", "error");
+    }
+  };
+
+  const handleEditTask = async (data) => {
+    setLoading(true);
+    try {
+      await taskService.updateTask(editingTask.id, data);
+      addToast("Tarefa atualizada com sucesso!", "error");
+      loadTasks();
+      setEditingTask(null);
+    } catch (error) {
+      console.error("Erro ao atualizar tarefa:", error);
+      addToast("Erro ao atualizar tarefa:", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -213,10 +248,24 @@ const Dashboard = () => {
               onToggleImportant={handleToggleImportant}
               onDelete={handleDeleteTask}
               onSelectTask={setSelectedTask}
+              onToggleSubtask={handleToggleSubtask}
+              onEditTask={setEditingTask}
             />
           </div>
         </div>
       </div>
+      {editingTask && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end lg:items-center justify-center p-4">
+          <div className="w-full max-w-md">
+            <TaskEditForm
+              task={editingTask}
+              onSave={handleEditTask}
+              onCancel={() => setEditingTask(null)}
+              loading={loading}
+            />
+          </div>
+        </div>
+      )}
       {selectedTask && (
         <TaskDetails
           task={selectedTask}

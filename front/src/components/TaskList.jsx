@@ -7,6 +7,7 @@ import {
   Calendar,
   ChevronDown,
   Edit2,
+  Paperclip,
 } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import ReminderBadge from "./ReminderBadge";
@@ -183,6 +184,10 @@ const TaskList = ({
 
                   <span className="flex-1 font-medium">{task.title}</span>
 
+                  {task.attachments && task.attachments.length > 0 && (
+                    <Paperclip className="w-4 h-4 text-blue-700" />
+                  )}
+
                   <Button
                     variant="ghost"
                     size="sm"
@@ -339,6 +344,10 @@ const TaskList = ({
                   <span className="flex-1 line-through text-muted-foreground">
                     {task.title}
                   </span>
+                  {task.attachments && task.attachments.length > 0 && (
+                    <Paperclip className="w-4 h-4 text-muted-foreground" />
+                  )}
+
                   <Button
                     variant="ghost"
                     size="sm"

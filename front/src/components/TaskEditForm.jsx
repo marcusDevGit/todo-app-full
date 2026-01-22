@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card, CardContent } from "./ui/card";
-import { X, Trash2 } from "lucide-react";
+import { X, Trash2, Paperclip, Upload, FileText } from "lucide-react";
 import TagSelector from "./TagSelector";
 import { taskService } from "@/services/taskService";
+import { useToast } from "@/hooks/useToast";
 import { Checkbox } from "./ui/checkbox";
 import { Label } from "@radix-ui/react-label";
 
@@ -28,10 +29,44 @@ const TaskEditForm = ({ task, onSave, onCancel, loading = false }) => {
     task.tags?.map((t) => t.tag) || [],
   );
 
+  const [attachments, setAttachments] = useState([]);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
+  const { addToast } = useToast();
+
   const [isSubtaskEnabled, setIsSubtaskEnabled] = useState(false);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [subtaskError, setSubtaskError] = useState("");
   const [existingSubtasks, setExistingSubtasks] = useState(task.subtasks || []);
+
+  useEffect(() => {
+    loadAttachments();
+  }, []);
+  const loadAttachments = async () => {
+    try {
+      const response = await taskService.getFiles(task.id);
+      setAttachments(response.data.data || []);
+    } catch (error) {
+      console.error("Erro ao carregar anexos:", error);
+    }
+  };
+
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      await taskService.uploadFile(task.id, file);
+      addToast("Arquivo adicionado com sucesso!", "success");
+      loadAttachments();
+    } catch (error) {
+      console.error("Erro ao adicionar arquivo", error);
+      addToast("Erro ao adicionar arquivo", "error");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -237,7 +272,45 @@ const TaskEditForm = ({ task, onSave, onCancel, loading = false }) => {
               </select>
             </div>
           )}
-          <div></div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <Paperclip className="w-4 h-4" /> Anexos
+              </label>
+              <div className="relative">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="file-upload-edit"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={uploading}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="h-8 text-xs"
+                >
+                  <Upload className="w-3 h-3 mr-1" />
+                  {uploading ? "Adicionando..." : "Adicionar Anexo"}
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-1">
+              {attachments.map((file) => (
+                <div
+                  key={file.id}
+                  className="flex items-center gap-2 p-2 bg-muted/50 rounded-md text-sm"
+                >
+                  <FileText className="w-4 h-4 text-blue-500" />
+                  <span className="truncate flex-1">{file.filename}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <TagSelector
             selectedTags={selectedTags}
             onTagsChange={setSelectedTags}

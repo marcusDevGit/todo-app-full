@@ -1,7 +1,15 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { X, Calendar, AlertCircle, Edit2, ChevronDown } from "lucide-react";
+import {
+  X,
+  Calendar,
+  AlertCircle,
+  Edit2,
+  ChevronDown,
+  Paperclip,
+  FileText,
+} from "lucide-react";
 import TaskEditForm from "./TaskEditForm";
 import SubTarefaForm from "./SubtaskForm";
 import SubTaskList from "./SubtaskList";
@@ -13,11 +21,22 @@ const TaskDetails = ({ task, onClose, onUpdate }) => {
   const [loading, setLoading] = useState(false);
   const [subtasks, setSubtasks] = useState(task.subtasks || []);
   const [showSubtasks, setShowSubtasks] = useState(false);
+  const [attachments, setAttachments] = useState([]);
   const { addToast } = useToast();
 
   useEffect(() => {
     setSubtasks(task.subtasks || []);
+    loadAttachments();
   }, [task]);
+
+  const loadAttachments = async () => {
+    try {
+      const response = await taskService.getFiles(task.id);
+      setAttachments(response.data.data || []);
+    } catch (error) {
+      console.error("Erro ao carregar anexos:", error);
+    }
+  };
 
   const handleSave = async (data) => {
     setLoading(true);
@@ -159,6 +178,29 @@ const TaskDetails = ({ task, onClose, onUpdate }) => {
               Status: {task.status === "completed" ? "Concluída" : "Pendente"}
             </span>
           </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium flex items-center gap-2">
+                <Paperclip className="w-4 h-4" /> Anexos
+              </p>
+            </div>
+            <div className="spacy-y-1">
+              {attachments.map((file) => (
+                <div
+                  key={file.id}
+                  className="flex items-center gap-2 p-2 bg-muted/50 text-sm"
+                >
+                  <FileText className="w-4 h-4 text-blue-500" />
+                  <span className="truncate flex-1">{file.filename}</span>
+                </div>
+              ))}
+              {attachments.length === 0 && (
+                <p className="text-xs text-muted-foreground italic">
+                  Nenhum anexo.
+                </p>
+              )}
+            </div>
+          </div>
 
           {subtasks.length > 0 && (
             <div className="mt-4 space-y-3">
@@ -190,11 +232,9 @@ const TaskDetails = ({ task, onClose, onUpdate }) => {
               )}
             </div>
           )}
-
           <div className="border-t pt-4 space-y-3">
             <SubTarefaForm onSubmit={handleCreateSubTask} loading={loading} />
           </div>
-
           <Button variant="outline" className="w-full" onClick={onClose}>
             Fechar
           </Button>

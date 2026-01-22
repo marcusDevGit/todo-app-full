@@ -10,7 +10,6 @@ import TaskDetails from "@/components/TaskDetails";
 import TaskEditForm from "@/components/TaskEditForm";
 import SearchFilter from "@/components/SearchFilter";
 import { taskService } from "@/services/taskService";
-import { set } from "zod";
 
 const Dashboard = () => {
   const { user, logout, loading: authLoading } = useAuth();
@@ -64,6 +63,15 @@ const Dashboard = () => {
     }
   }, [authLoading, user]);
 
+  useEffect(() => {
+    if (selectedTask) {
+      const updatedTask = tasks.find((t) => t.id === selectedTask.id);
+      if (updatedTask) {
+        setSelectedTask(updatedTask);
+      }
+    }
+  }, [tasks]);
+
   const handleCreateTask = async (data) => {
     setLoading(true);
     try {
@@ -87,7 +95,7 @@ const Dashboard = () => {
       await taskService.updateTask(task.id, { status: newStatus });
       addToast(
         newStatus === "completed" ? "Tarefa concluida!" : "Tarefa reaberta",
-        "success"
+        "success",
       );
       loadTasks();
     } catch (error) {
@@ -104,7 +112,7 @@ const Dashboard = () => {
         newImportant
           ? "Tarefa marcada como importante!"
           : "Removido de importante",
-        "success"
+        "success",
       );
       loadTasks();
     } catch (error) {
@@ -135,7 +143,7 @@ const Dashboard = () => {
         newStatus === "completed"
           ? "Subtarefa concluida!"
           : "Subtarefa reaberta",
-        "success"
+        "success",
       );
       loadTasks();
     } catch (error) {
@@ -144,16 +152,28 @@ const Dashboard = () => {
     }
   };
 
-  const handleEditTask = async (data) => {
+  const handleEditTask = async (data, newSubtaskData = null) => {
     setLoading(true);
     try {
       await taskService.updateTask(editingTask.id, data);
-      addToast("Tarefa atualizada com sucesso!", "error");
+      addToast("Tarefa atualizada com sucesso!", "success");
+      if (newSubtaskData && newSubtaskData.title.trim()) {
+        try {
+          await taskService.createSubtask(editingTask.id, newSubtaskData);
+          addToast("Subtarefa criada com sucesso!", "success");
+        } catch (subtaskError) {
+          console.error(
+            "Erro ao criar a subtarefa durante edição:",
+            subtaskError,
+          );
+          addToast("Erro ao criar a subtarefa!", "error");
+        }
+      }
       loadTasks();
       setEditingTask(null);
     } catch (error) {
       console.error("Erro ao atualizar tarefa:", error);
-      addToast("Erro ao atualizar tarefa:", "error");
+      addToast("Erro ao atualizar tarefa!", "error");
     } finally {
       setLoading(false);
     }
@@ -165,7 +185,7 @@ const Dashboard = () => {
     switch (activeView) {
       case "today":
         return tasks.filter(
-          (t) => new Date(t.createdAt).toDateString() === today
+          (t) => new Date(t.createdAt).toDateString() === today,
         );
       case "important":
         return tasks.filter((t) => t.important);
@@ -226,12 +246,12 @@ const Dashboard = () => {
                   {activeView === "tasks"
                     ? "Tarefas"
                     : activeView === "today"
-                    ? " O Meu Dia"
-                    : activeView === "important"
-                    ? "Importante"
-                    : activeView === "planned"
-                    ? "Planejado"
-                    : " Atribuído a min"}
+                      ? " O Meu Dia"
+                      : activeView === "important"
+                        ? "Importante"
+                        : activeView === "planned"
+                          ? "Planejado"
+                          : " Atribuído a min"}
                 </h2>
                 <p className="text-muted-foreground mt-1">
                   {activeTasks.length} ativas ● {completedTasks.length}
@@ -274,6 +294,7 @@ const Dashboard = () => {
             loadTasks();
           }}
           onUpdate={loadTasks}
+          onToggleSubtask={handleToggleSubtask}
         />
       )}
     </div>

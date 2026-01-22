@@ -55,8 +55,8 @@ const TaskDetails = ({ task, onClose, onUpdate }) => {
       await taskService.updateTask(subtask.id, { status: newStatus });
       setSubtasks(
         subtasks.map((st) =>
-          st.id === subtask.id ? { ...st, status: newStatus } : st
-        )
+          st.id === subtask.id ? { ...st, status: newStatus } : st,
+        ),
       );
     } catch (error) {
       console.error("Error updating subtask status:", error);
@@ -156,7 +156,7 @@ const TaskDetails = ({ task, onClose, onUpdate }) => {
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-yellow-500" />
             <span className="text-sm">
-              Status: {task.status === "comleted" ? "Concluída" : "Pendente"}
+              Status: {task.status === "completed" ? "Concluída" : "Pendente"}
             </span>
           </div>
 

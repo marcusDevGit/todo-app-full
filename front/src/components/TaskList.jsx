@@ -47,7 +47,7 @@ const TaskList = ({
   const getProgressPercentage = (task) => {
     if (!task.subtasks || task.subtasks.length === 0) return 0;
     const completedSubtasks = task.subtasks.filter(
-      (st) => st.status === "completed"
+      (st) => st.status === "completed",
     ).length;
     return Math.round((completedSubtasks / task.subtasks.length) * 100);
   };
@@ -64,7 +64,7 @@ const TaskList = ({
 
     const date = new Date(dueDate);
     const localDate = new Date(
-      date.getTime() + date.getTimezoneOffset() * 60000
+      date.getTime() + date.getTimezoneOffset() * 60000,
     );
 
     const today = new Date();
@@ -87,7 +87,7 @@ const TaskList = ({
         if (task.reminderDate && task.reminderTime) {
           const date = new Date(task.reminderDate);
           const localDate = new Date(
-            date.getTime() + date.getTimezoneOffset() * 60000
+            date.getTime() + date.getTimezoneOffset() * 60000,
           );
           const reminderDateTimeStr = `${
             localDate.toISOString().split("T")[0]
@@ -146,7 +146,7 @@ const TaskList = ({
           <div key={task.id}>
             <Card
               className={`glass-card animate-fade-in hover:shadow-lg transition-all ${getPriorityColor(
-                task.priority
+                task.priority,
               )}`}
             >
               <CardContent className="p-4 space-y-2">
@@ -196,7 +196,7 @@ const TaskList = ({
                       className={`w-4 h-4 ${
                         task.important
                           ? "fill-yellow-400 text-yellow-400"
-                          : "text-gray-400 hover:text-yellow-400"
+                          : "text-yellow-500 hover:text-yellow-400"
                       }`}
                     />
                   </Button>
@@ -209,7 +209,7 @@ const TaskList = ({
                     }}
                     className="p-0 h-auto hover:bg-transparent"
                   >
-                    <Edit2 className="w-4 h-4 text-gray-400 hover:text-primary" />
+                    <Edit2 className="w-4 h-4 text-green-700 hover:text-primary" />
                   </Button>
                   <Button
                     variant="ghost"
@@ -218,9 +218,9 @@ const TaskList = ({
                       e.stopPropagation();
                       onDelete(task);
                     }}
-                    className="p-9 h-auto hover:bg-transparent"
+                    className="p-0 h-auto hover:bg-transparent"
                   >
-                    <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
+                    <Trash2 className="w-4 h-4 text-amber-700 hover:text-red-500" />
                   </Button>
                   {task.dueDate && (
                     <div
@@ -236,7 +236,7 @@ const TaskList = ({
                     <ReminderBadge reminderDate={task.reminderDate} />
                   )}
                 </div>
-                {isExpanded && task.description && (
+                {task.description && (
                   <div className="text-sm text-muted-foreground">
                     {task.description}
                   </div>
@@ -320,7 +320,8 @@ const TaskList = ({
           {completedTasks.map((task) => (
             <Card
               key={task.id}
-              className="glass-card animate-fade-in opacity-75 hover:opacity-90 transition-all"
+              className="glass-card animate-fade-in opacity-75 hover:opacity-90 transition-all cursor-pointer"
+              onClick={() => onSelectTask?.(task)}
             >
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
@@ -347,7 +348,7 @@ const TaskList = ({
                     }}
                     className="p-0 h-auto hover:bg-transparent"
                   >
-                    <Trash2 className="w-4 h-4 text-gray-400 hover:text-red-500" />
+                    <Trash2 className="w-4 h-4 text-amber-700 hover:text-red-500" />
                   </Button>
                   <span className="text-xs text-muted-foreground">
                     {new Date(task.createdAt).toLocaleDateString()}

@@ -2,8 +2,11 @@ import { useState } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card, CardContent } from "./ui/card";
-import { X } from "lucide-react";
+import { X, Trash2 } from "lucide-react";
 import TagSelector from "./TagSelector";
+import { taskService } from "@/services/taskService";
+import { Checkbox } from "./ui/checkbox";
+import { Label } from "@radix-ui/react-label";
 
 const TaskEditForm = ({ task, onSave, onCancel, loading = false }) => {
   const [title, setTitle] = useState(task.title);
@@ -12,21 +15,34 @@ const TaskEditForm = ({ task, onSave, onCancel, loading = false }) => {
   const [reminderDate, setReminderDate] = useState(
     task.reminderDate
       ? new Date(task.reminderDate).toISOString().split("T")[0]
-      : ""
+      : "",
   );
   const [reminderTime, setReminderTime] = useState(task.reminderTime || "");
   const [reminderFrequency, setReminderFrequency] = useState(
-    task.reminderFrequency || "once"
+    task.reminderFrequency || "once",
   );
   const [dueDate, setDueDate] = useState(
-    task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : ""
+    task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : "",
   );
   const [selectedTags, setSelectedTags] = useState(
-    task.tags?.map((t) => t.tag) || []
+    task.tags?.map((t) => t.tag) || [],
   );
 
-  const handleSubmit = (e) => {
+  const [isSubtaskEnabled, setIsSubtaskEnabled] = useState(false);
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
+  const [subtaskError, setSubtaskError] = useState("");
+  const [existingSubtasks, setExistingSubtasks] = useState(task.subtasks || []);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (isSubtaskEnabled && !newSubtaskTitle.trim()) {
+      setSubtaskError("O nome da subtarefa não poder ser vazio.");
+      return;
+    } else {
+      setSubtaskError("");
+    }
+
     const data = {
       title,
       description,
@@ -46,7 +62,24 @@ const TaskEditForm = ({ task, onSave, onCancel, loading = false }) => {
     if (reminderFrequency.trim()) {
       data.reminderFrequency = reminderFrequency;
     }
-    onSave(data);
+
+    const subtaskData =
+      isSubtaskEnabled && newSubtaskTitle.trim()
+        ? { title: newSubtaskTitle }
+        : null;
+    onSave(data, subtaskData);
+  };
+
+  const handleDeleteExistingSubtask = async (subtaskId) => {
+    if (!window.confirm("Tem certeza que deseja excluir esta subtarefa?"))
+      return;
+    try {
+      await taskService.deleteTask(subtaskId);
+      setExistingSubtasks(existingSubtasks.filter((t) => t.id !== subtaskId));
+    } catch (error) {
+      console.error("Erro ao excluir subtarefa:", error);
+      setSubtaskError("Erro ao excluir subtarefa.");
+    }
   };
 
   return (
@@ -61,6 +94,76 @@ const TaskEditForm = ({ task, onSave, onCancel, loading = false }) => {
               placeholder="Titulo da tarefa"
               required
             />
+          </div>
+          <div>
+            {existingSubtasks.length > 0 && (
+              <div className="mb-4 space-y-2">
+                <Label className="text-sm font-medium">
+                  Subtarefas Existentes
+                </Label>
+                {existingSubtasks.map((subtask) => (
+                  <div key={subtask.id} className="flex items-center gap-2">
+                    <div className="flex-1 p-2 border rounded-md bg-background/50">
+                      <span className="text-sm">{subtask.title}</span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-destructive hover:text-destructive/90"
+                      onClick={() => handleDeleteExistingSubtask(subtask.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex items-center gap-2 mb-2">
+              <Checkbox
+                id="createSubtask"
+                checked={isSubtaskEnabled}
+                onCheckedChange={(checked) => {
+                  setIsSubtaskEnabled(checked);
+                  if (!checked) setNewSubtaskTitle("");
+                  setSubtaskError("");
+                }}
+              />
+              <Label
+                htmlFor="createSubtask"
+                className="text-sm text-muted-foreground cursor-pointer"
+              >
+                Adicionar Subtarefa
+              </Label>
+            </div>
+            {isSubtaskEnabled && (
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={newSubtaskTitle}
+                    onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                    placeholder="Nome da subtarefa"
+                    className="mt-2 flex-1"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="mt-2 h-8 w-8 text-destructive"
+                    onClick={() => {
+                      setIsSubtaskEnabled(false);
+                      setNewSubtaskTitle("");
+                      setSubtaskError("");
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+                {subtaskError && (
+                  <p className="text-destructive text-sm">{subtaskError}</p>
+                )}
+              </div>
+            )}
           </div>
           <div>
             <label className="text-sm font-medium">Descrição</label>

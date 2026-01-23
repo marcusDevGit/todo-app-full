@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "./ThemeToggle";
 
 const Sidebar = ({
   activeView = "tasks",
@@ -32,7 +33,7 @@ const Sidebar = ({
       { id: "assigned", icon: CheckSquare, label: "Atribuido a mim", count: 0 },
       { id: "tasks", icon: Home, label: "Tarefas", count: 0 },
     ],
-    []
+    [],
   );
 
   const handleItemClick = (id) => {
@@ -54,7 +55,7 @@ const Sidebar = ({
           showMobileSidebar
             ? "translate-x-0"
             : "-translate-x-full lg:translate-x-0",
-          !showSidebar && "lg:-translate-x-full"
+          !showSidebar && "lg:-translate-x-full",
         )}
       >
         <div className="p-6 border-b border-sidebar-border">
@@ -68,20 +69,21 @@ const Sidebar = ({
             >
               <Menu className="w-5 h-5" />
             </Button>
-            <Button
+            {/* <Button
               variant="ghost"
               size="sm"
               className="hover:bg-sidebar-accent"
               aria-label="Settings"
             >
               <Settings className="w-5 h-5" />
-            </Button>
+            </Button> */}
+            <ThemeToggle />
           </div>
 
           <div>
             <h1 className="text-2xl font-bold gradient-text">To Do List</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Designed by Slandio Soares
+              Designed by Marcus Phellypp
             </p>
           </div>
         </div>
@@ -100,13 +102,13 @@ const Sidebar = ({
                     "w-full justify-start gap-3 h-12 transition-all duration-200",
                     isActive &&
                       "hover:bg-sidebar-accent border-l-4 border-primary shadow-sm",
-                    !isActive && "hover:bg-sidebar-accent hover:translate-x-1"
+                    !isActive && "hover:bg-sidebar-accent hover:translate-x-1",
                   )}
                 >
                   <Icon
                     className={cn(
                       "w-5 h-5 transition-colors",
-                      isActive ? "text-primary" : "text-sidebar-foreground"
+                      isActive ? "text-primary" : "text-sidebar-foreground",
                     )}
                   />
                   <span className="flex-1 text-left font-medium">
@@ -137,12 +139,10 @@ const Sidebar = ({
               <User className="w-4 h-4 text-primary-foreground" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-muted-foreground truncate">
+              <p className="text-sm font-medium text-muted truncate">
                 {user?.name || user?.email}
               </p>
-              <p className="text-xs text-muted-foreground truncate">
-                {user?.email}
-              </p>
+              <p className="text-xs text-foreground truncate">{user?.email}</p>
             </div>
           </div>
           <Button

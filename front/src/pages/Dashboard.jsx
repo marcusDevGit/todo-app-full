@@ -10,6 +10,7 @@ import TaskDetails from "@/components/TaskDetails";
 import TaskEditForm from "@/components/TaskEditForm";
 import SearchFilter from "@/components/SearchFilter";
 import { taskService } from "@/services/taskService";
+import { listService } from "@/services/listService";
 
 const Dashboard = () => {
   const { user, logout, loading: authLoading } = useAuth();
@@ -22,10 +23,14 @@ const Dashboard = () => {
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [editingTask, setEditingTask] = useState(null);
+  const [userLists, setUserLists] = useState([]);
 
   const loadTasks = async () => {
     try {
-      const response = await taskService.getTasks();
+      const isUserListActive = userLists.some((list) => list.id === activeView);
+      const response = await taskService.getTasks(
+        isUserListActive ? activeView : undefined,
+      );
       setTasks(response.data.data);
     } catch (error) {
       console.error("Erro ao caregar tarefas:", error);
@@ -40,6 +45,16 @@ const Dashboard = () => {
     } catch (error) {
       console.error("Erro ao caregar tags:", error);
       addToast("Erro ao caregar tags:", " error");
+    }
+  };
+
+  const loadLists = async () => {
+    try {
+      const response = await listService.getLists();
+      setUserLists(response.data.data);
+    } catch (error) {
+      console.error("Erro ao caregar listas:", error);
+      addToast("Erro ao carregar listas:", "error");
     }
   };
 
@@ -58,8 +73,8 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (!authLoading && user) {
+      loadLists();
       loadTasks();
-      loadTags();
     }
   }, [authLoading, user]);
 
@@ -179,6 +194,25 @@ const Dashboard = () => {
     }
   };
 
+  const handleCreateList = async (listName) => {
+    setLoading(true);
+    try {
+      const response = await listService.createList(listName);
+      const newList = response.data.data;
+      setUserLists((prevLists) => [...prevLists, newList]);
+      addToast(`Lista "${listName}" criada com sucesso!`, "success");
+      setActiveView(newList.id);
+    } catch (error) {
+      console.error("Erro ao criar a lista:", error);
+      addToast(
+        error.response?.data?.error || "Erro ao criar a lista:",
+        "error",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getFilteredTasks = () => {
     const today = new Date().toDateString();
 
@@ -193,6 +227,8 @@ const Dashboard = () => {
         return tasks.filter((t) => t.dueDate);
       case "assigned":
         return tasks.filter((t) => t.userId);
+      case userLists.find((list) => list.id === activeView)?.id:
+        return tasks.filter((t) => t.listId === activeView);
       default:
         return tasks;
     }
@@ -222,6 +258,8 @@ const Dashboard = () => {
         setShowSidebar={setShowSidebar}
         showMobileSidebar={showMobileSidebar}
         setShowMobileSidebar={setShowMobileSidebar}
+        userLists={userLists}
+        onCreatelist={handleCreateList}
         user={user}
         logout={logout}
       />
@@ -243,15 +281,26 @@ const Dashboard = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-3xl font-bold gradient-text">
-                  {activeView === "tasks"
-                    ? "Tarefas"
-                    : activeView === "today"
-                      ? " O Meu Dia"
-                      : activeView === "important"
-                        ? "Importante"
-                        : activeView === "planned"
-                          ? "Planejado"
-                          : " Atribuído a min"}
+                  {(() => {
+                    const activeUserList = userLists.find(
+                      (list) => list.id === activeView,
+                    );
+                    if (activeUserList) return activeUserList.name;
+                    switch (activeView) {
+                      case "tasks":
+                        return "Tarefas";
+                      case "today":
+                        return "O Meu Dia";
+                      case "important":
+                        return "Importantes";
+                      case "Planned":
+                        return "Planejado";
+                      case "assigned":
+                        return "Atribuído a mim";
+                      default:
+                        return "Tarefas";
+                    }
+                  })()}
                 </h2>
                 <p className="text-muted-foreground mt-1">
                   {activeTasks.length} ativas ● {completedTasks.length}
@@ -270,6 +319,7 @@ const Dashboard = () => {
               onSelectTask={setSelectedTask}
               onToggleSubtask={handleToggleSubtask}
               onEditTask={setEditingTask}
+              activeView={activeView}
             />
           </div>
         </div>
@@ -280,6 +330,7 @@ const Dashboard = () => {
             <TaskEditForm
               task={editingTask}
               onSave={handleEditTask}
+              userLists={userLists}
               onCancel={() => setEditingTask(null)}
               loading={loading}
             />

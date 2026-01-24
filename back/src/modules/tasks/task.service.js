@@ -19,7 +19,7 @@ export const create = async (userId, data) => {
                 if (!tag)
                   tag = await prisma.tag.create({ data: { name: tagName } });
                 return { tagId: tag.id };
-              })
+              }),
             ),
           }
         : undefined,
@@ -38,6 +38,7 @@ export const getAll = (userId) => repository.findByUser(userId);
 export const search = (userId, filters) => {
   const parsedFilters = {
     title: filters.title || "",
+    listId: filters.listId,
     tagIds: filters.tagIds ? JSON.parse(filters.tagIds) : [],
     dueDateFrom: filters.dueDateFrom,
     dueDateTo: filters.dueDateTo,
@@ -77,7 +78,7 @@ export const update = async (id, userId, data) => {
                 if (!tag)
                   tag = await prisma.tag.create({ data: { name: tagName } });
                 return { tagId: tag.id };
-              })
+              }),
             ),
           }
         : undefined,

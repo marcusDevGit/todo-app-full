@@ -2,14 +2,20 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card, CardContent } from "./ui/card";
-import { X, Trash2, Paperclip, Upload, FileText } from "lucide-react";
+import { X, Trash2, Paperclip, Upload, FileText, List } from "lucide-react";
 import TagSelector from "./TagSelector";
 import { taskService } from "@/services/taskService";
 import { useToast } from "@/hooks/useToast";
 import { Checkbox } from "./ui/checkbox";
 import { Label } from "@radix-ui/react-label";
 
-const TaskEditForm = ({ task, onSave, onCancel, loading = false }) => {
+const TaskEditForm = ({
+  task,
+  onSave,
+  onCancel,
+  loading = false,
+  userLists = [],
+}) => {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || "");
   const [priority, setPriority] = useState(task.priority || 0);
@@ -28,7 +34,7 @@ const TaskEditForm = ({ task, onSave, onCancel, loading = false }) => {
   const [selectedTags, setSelectedTags] = useState(
     task.tags?.map((t) => t.tag) || [],
   );
-
+  const [selectedListId, setSelectedListId] = useState(task.listId || "");
   const [attachments, setAttachments] = useState([]);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef(null);
@@ -83,6 +89,7 @@ const TaskEditForm = ({ task, onSave, onCancel, loading = false }) => {
       description,
       priority: parseInt(priority),
       tags: selectedTags.map((t) => t.name),
+      listId: selectedListId ? parseInt(selectedListId) : null,
     };
 
     if (dueDate.trim()) {
@@ -316,6 +323,23 @@ const TaskEditForm = ({ task, onSave, onCancel, loading = false }) => {
             onTagsChange={setSelectedTags}
             loading={loading}
           />
+          <div className="space-y-1">
+            <label className="text-sm font-medium flex items-center gap-2">
+              <List className="w-4 h-4" /> Lista
+            </label>
+            <select
+              value={selectedListId}
+              onChange={(e) => setSelectedListId(e.target.value)}
+              className="w-full p-2 border rounded-md bg-background/50 text-sm"
+            >
+              <option value="">Nenhuma lista</option>
+              {userLists.map((list) => (
+                <option key={list.id} value={list.id}>
+                  {list.name}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="flex gap-2">
             <Button type="submit" disabled={loading} className="flex-1">
               Salvar

@@ -8,6 +8,7 @@ import {
   ChevronDown,
   Edit2,
   Paperclip,
+  List,
 } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import ReminderBadge from "./ReminderBadge";
@@ -22,6 +23,7 @@ const TaskList = ({
   onSelectTask,
   onToggleSubtask,
   onEditTask,
+  activeView,
 }) => {
   const [expandedTasks, setExpandedTasks] = useState({});
 
@@ -180,6 +182,14 @@ const TaskList = ({
                         }`}
                       />
                     </Button>
+                  )}
+                  {task.list && activeView !== task.list.id && (
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground bg-gray-700 px-2 py-1  rounded-full">
+                      <List className="w-3 h-3" />
+                      <span className="truncate max-w-20">
+                        {task.list.name}
+                      </span>
+                    </div>
                   )}
 
                   <span className="flex-1 font-medium">{task.title}</span>
@@ -344,6 +354,15 @@ const TaskList = ({
                   <span className="flex-1 line-through text-muted-foreground">
                     {task.title}
                   </span>
+
+                  {task.list && activeView !== task.list.id && (
+                    <div className="flex items-center gap-1 text-sm text-muted-foreground bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full">
+                      <List className="w-3 h-3" />
+                      <span className="truncate max-w-20">
+                        {task.list.name}
+                      </span>
+                    </div>
+                  )}
                   {task.attachments && task.attachments.length > 0 && (
                     <Paperclip className="w-4 h-4 text-muted-foreground" />
                   )}

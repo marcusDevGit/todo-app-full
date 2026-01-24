@@ -31,6 +31,10 @@ export const search = (userId, filter) => {
   if (filter.title) {
     where.title = { contains: filter.title, mode: "insensitive" };
   }
+
+  if (filter.listId && filter.listId !== "undefined") {
+    where.listId = parseInt(filter.listId);
+  }
   if (filter.tagIds && filter.tagIds.length > 0) {
     where.tags = {
       some: { tagId: { in: filter.tagIds } },

@@ -10,6 +10,7 @@ export const taskService = {
   createSubtask: (id, data) => api.post(`/tasks/${id}/subtasks`, data),
   getTags: () => api.get("/tags"),
   createTag: (data) => api.post("/tags", data),
+  deleteTag: (id) => api.delete(`/tags/${id}`),
 
   uploadFile: (taskId, file) => {
     const formData = new FormData();

@@ -18,3 +18,12 @@ export const create = async (req, res, next) => {
     next(error);
   }
 };
+
+export const del = async (req, res, next) => {
+  try {
+    await service.remove(req.params.id);
+    success(res, null, "Tag excluída com sucesso");
+  } catch (error) {
+    next(error);
+  }
+};

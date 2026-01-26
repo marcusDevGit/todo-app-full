@@ -70,8 +70,27 @@ const TagSelector = ({ selectedTags = [], onTagsChange, loading = false }) => {
     }
   };
 
+  const handleDeleteTag = async (tagId) => {
+    if (!window.confirm("Tem certeza que deseja excluir esta tag?")) return;
+    setTagLoading(true);
+    try {
+      await taskService.deleteTag(tagId);
+      await loadTags();
+      // Remove a tag das selecionadas se estava selecionada
+      if (selectedTags.find((t) => t.id === tagId)) {
+        onTagsChange(selectedTags.filter((t) => t.id !== tagId));
+      }
+      addToast("Tag excluída com sucesso", "success");
+    } catch (error) {
+      console.error("Erro ao excluir tag:", error.response?.data || error);
+      addToast(error.response?.data?.message || "Erro ao excluir tag", "error");
+    } finally {
+      setTagLoading(false);
+    }
+  };
+
   const availableTags = tags.filter(
-    (t) => !selectedTags.find((st) => st.id === t.id)
+    (t) => !selectedTags.find((st) => st.id === t.id),
   );
 
   return (
@@ -134,16 +153,32 @@ const TagSelector = ({ selectedTags = [], onTagsChange, loading = false }) => {
               </div>
               <div className=" flex flex-wrap gap-2">
                 {availableTags.map((tag) => (
-                  <Button
+                  <div
                     key={tag.id}
-                    type="button"
-                    onClick={() => handleAddTag(tag)}
-                    variant="ghost"
-                    className=" text-white text-sm"
+                    className="flex items-center gap-1 rounded-md overflow-hidden"
                     style={{ backgroundColor: tag.color || "#3b82f6" }}
                   >
-                    {tag.name}
-                  </Button>
+                    <Button
+                      type="button"
+                      onClick={() => handleAddTag(tag)}
+                      variant="ghost"
+                      className="text-white text-sm hover:bg-black/10 rounded-none px-3"
+                    >
+                      {tag.name}
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteTag(tag.id);
+                      }}
+                      variant="ghost"
+                      size="sm"
+                      className="text-white hover:bg-red-600/80 rounded-none px-2 h-full"
+                    >
+                      <X className="w-3 h-3" />
+                    </Button>
+                  </div>
                 ))}
               </div>
             </CardContent>

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import Sidebar from "@/components/Sidebar";
 import TaskForm from "@/components/TaskForm";
 import TaskList from "@/components/TaskList";
+import PlannedView from "@/components/PlannedView";
 import TaskDetails from "@/components/TaskDetails";
 import TaskEditForm from "@/components/TaskEditForm";
 import SearchFilter from "@/components/SearchFilter";
@@ -75,6 +76,7 @@ const Dashboard = () => {
     if (!authLoading && user) {
       loadLists();
       loadTasks();
+      loadTags();
     }
   }, [authLoading, user]);
 
@@ -293,7 +295,7 @@ const Dashboard = () => {
                         return "O Meu Dia";
                       case "important":
                         return "Importantes";
-                      case "Planned":
+                      case "planned":
                         return "Planejado";
                       case "assigned":
                         return "Atribuído a mim";
@@ -311,16 +313,29 @@ const Dashboard = () => {
             </div>
             <SearchFilter onSearch={handleSearch} tags={allTags} />
             <TaskForm onsubmit={handleCreateTask} loading={loading} />
-            <TaskList
-              tasks={filteredTasks}
-              onToggleStatus={toggleTaskStatus}
-              onToggleImportant={handleToggleImportant}
-              onDelete={handleDeleteTask}
-              onSelectTask={setSelectedTask}
-              onToggleSubtask={handleToggleSubtask}
-              onEditTask={setEditingTask}
-              activeView={activeView}
-            />
+            {activeView === "planned" ? (
+              <PlannedView
+                tasks={tasks}
+                onToggleStatus={toggleTaskStatus}
+                onToggleImportant={handleToggleImportant}
+                onDelete={handleDeleteTask}
+                onSelectTask={setSelectedTask}
+                onToggleSubtask={handleToggleSubtask}
+                onEditTask={setEditingTask}
+                activeView={activeView}
+              />
+            ) : (
+              <TaskList
+                tasks={filteredTasks}
+                onToggleStatus={toggleTaskStatus}
+                onToggleImportant={handleToggleImportant}
+                onDelete={handleDeleteTask}
+                onSelectTask={setSelectedTask}
+                onToggleSubtask={handleToggleSubtask}
+                onEditTask={setEditingTask}
+                activeView={activeView}
+              />
+            )}
           </div>
         </div>
       </div>

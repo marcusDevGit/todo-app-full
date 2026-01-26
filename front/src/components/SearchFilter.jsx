@@ -51,7 +51,7 @@ const SearchFilter = ({ onSearch, tags = [] }) => {
     setSelectedTags(
       selectedTags.includes(tagId)
         ? selectedTags.filter((t) => t !== tagId)
-        : [...selectedTags, tagId]
+        : [...selectedTags, tagId],
     );
   };
 
@@ -70,6 +70,7 @@ const SearchFilter = ({ onSearch, tags = [] }) => {
           variant="outline"
           size="sm"
         >
+          <Search className="w-4 h-4 mr-1" />
           Filtros
         </Button>
       </div>
@@ -102,7 +103,7 @@ const SearchFilter = ({ onSearch, tags = [] }) => {
                 <select
                   value={priority}
                   onChange={(e) => setPriority(e.target.value)}
-                  className="w-full p-2 border rounded-md text-sm"
+                  className="w-full p-2 border rounded-md text-sm bg-background"
                 >
                   <option value="">Todas</option>
                   <option value="0">Baixa</option>
@@ -116,7 +117,7 @@ const SearchFilter = ({ onSearch, tags = [] }) => {
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="w-full p-2 border rounded-md text-sm"
+                  className="w-full p-2 border rounded-md text-sm bg-background"
                 >
                   <option value="">Todos</option>
                   <option value="pending">Pendente</option>
@@ -136,11 +137,11 @@ const SearchFilter = ({ onSearch, tags = [] }) => {
                     <Button
                       key={tag.id}
                       size="sm"
-                      className={`${
-                        isSelected
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground hover:bg-muted/80"
-                      }`}
+                      className="text-white"
+                      style={{
+                        backgroundColor: tag.color || "#3b82f6",
+                        opacity: isSelected ? 1 : 0.6,
+                      }}
                       onClick={() => toggleTag(tag.id)}
                     >
                       {tag.name}

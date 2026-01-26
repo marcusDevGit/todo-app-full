@@ -1,135 +1,369 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import Layout from "@/components/Layout";
+import { useToast } from "@/hooks/useToast";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Sidebar from "@/components/Sidebar";
+import TaskForm from "@/components/TaskForm";
+import TaskList from "@/components/TaskList";
+import PlannedView from "@/components/PlannedView";
+import TaskDetails from "@/components/TaskDetails";
+import TaskEditForm from "@/components/TaskEditForm";
+import SearchFilter from "@/components/SearchFilter";
 import { taskService } from "@/services/taskService";
+import { listService } from "@/services/listService";
 
 const Dashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, loading: authLoading } = useAuth();
+  const { addToast } = useToast();
   const [tasks, setTasks] = useState([]);
-  const [newTask, setNewTask] = useState("");
+  const [allTags, setAllTags] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [activeView, setActiveView] = useState("tasks");
+  const [showSidebar, setShowSidebar] = useState(true);
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [editingTask, setEditingTask] = useState(null);
+  const [userLists, setUserLists] = useState([]);
 
   const loadTasks = async () => {
     try {
-      const response = await taskService.getTasks();
+      const isUserListActive = userLists.some((list) => list.id === activeView);
+      const response = await taskService.getTasks(
+        isUserListActive ? activeView : undefined,
+      );
       setTasks(response.data.data);
     } catch (error) {
       console.error("Erro ao caregar tarefas:", error);
+      addToast("Erro ao caregar tarefas:", "error");
+    }
+  };
+
+  const loadTags = async () => {
+    try {
+      const response = await taskService.getTags();
+      setAllTags(response.data.data);
+    } catch (error) {
+      console.error("Erro ao caregar tags:", error);
+      addToast("Erro ao caregar tags:", " error");
+    }
+  };
+
+  const loadLists = async () => {
+    try {
+      const response = await listService.getLists();
+      setUserLists(response.data.data);
+    } catch (error) {
+      console.error("Erro ao caregar listas:", error);
+      addToast("Erro ao carregar listas:", "error");
+    }
+  };
+
+  const handleSearch = async (filters) => {
+    setLoading(true);
+    try {
+      const response = await taskService.search(filters);
+      setTasks(response.data.data);
+    } catch (error) {
+      console.error("Erro ao buscar tarefas:", error);
+      addToast("Erro ao buscar tarefas", "error");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadTasks(); //eslint-disable-line react-hooks/exhaustive-deps
-  }, []);
+    if (!authLoading && user) {
+      loadLists();
+      loadTasks();
+      loadTags();
+    }
+  }, [authLoading, user]);
 
-  const handleCreateTask = async (e) => {
-    e.preventDefault();
-    if (!newTask.trim()) return;
+  useEffect(() => {
+    if (selectedTask) {
+      const updatedTask = tasks.find((t) => t.id === selectedTask.id);
+      if (updatedTask) {
+        setSelectedTask(updatedTask);
+      }
+    }
+  }, [tasks]);
 
+  const handleCreateTask = async (data) => {
     setLoading(true);
     try {
       await taskService.createTask({
-        title: newTask,
+        title: data.title,
         status: "pending",
       });
-      setNewTask("");
+      addToast("Tarefa criada com sucesso!", "success");
       loadTasks();
     } catch (error) {
       console.error("Erro ao criar a tarefa:", error);
+      addToast("Erro ao criar a tarefa:", "error");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const toggleTaskStatus = async (task) => {
     try {
       const newStatus = task.status === "completed" ? "pending" : "completed";
       await taskService.updateTask(task.id, { status: newStatus });
+      addToast(
+        newStatus === "completed" ? "Tarefa concluida!" : "Tarefa reaberta",
+        "success",
+      );
       loadTasks();
     } catch (error) {
       console.error("Erro ao atualizar status da tarefa", error);
+      addToast("Erro ao atualizar status da tarefa", "error");
     }
   };
 
-  return (
-    <Layout>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">
-            Bem-vindo, {user?.name || "Usuario"}!
-          </h1>
-          <Button onClick={logout} variant="outline">
-            Sair
-          </Button>
+  const handleToggleImportant = async (task) => {
+    try {
+      const newImportant = !task.important;
+      await taskService.updateTask(task.id, { important: newImportant });
+      addToast(
+        newImportant
+          ? "Tarefa marcada como importante!"
+          : "Removido de importante",
+        "success",
+      );
+      loadTasks();
+    } catch (error) {
+      console.error("Erro ao marca com importante:", error);
+      addToast("Erro ao marca com importante:", "error");
+    }
+  };
+
+  const handleDeleteTask = async (task) => {
+    if (!window.confirm("Tem certeza que deseja deletar esta tarefa?")) return;
+    try {
+      await taskService.deleteTask(task.id);
+      addToast("Tarefa deletada com sucesso!", "success");
+      loadTasks();
+      setSelectedTask(null);
+    } catch (error) {
+      console.error("Erro ao deletar tarefa:", error);
+      addToast("Erro ao deletar tarefa:", "error");
+    }
+  };
+
+  const handleToggleSubtask = async (subtask) => {
+    try {
+      const newStatus =
+        subtask.status === "completed" ? "pending" : "completed";
+      await taskService.updateTask(subtask.id, { status: newStatus });
+      addToast(
+        newStatus === "completed"
+          ? "Subtarefa concluida!"
+          : "Subtarefa reaberta",
+        "success",
+      );
+      loadTasks();
+    } catch (error) {
+      console.error("Erro ao atualizar subtarefas:", error);
+      addToast("Erro ao atualizar subtarefas", "error");
+    }
+  };
+
+  const handleEditTask = async (data, newSubtaskData = null) => {
+    setLoading(true);
+    try {
+      await taskService.updateTask(editingTask.id, data);
+      addToast("Tarefa atualizada com sucesso!", "success");
+      if (newSubtaskData && newSubtaskData.title.trim()) {
+        try {
+          await taskService.createSubtask(editingTask.id, newSubtaskData);
+          addToast("Subtarefa criada com sucesso!", "success");
+        } catch (subtaskError) {
+          console.error(
+            "Erro ao criar a subtarefa durante edição:",
+            subtaskError,
+          );
+          addToast("Erro ao criar a subtarefa!", "error");
+        }
+      }
+      loadTasks();
+      setEditingTask(null);
+    } catch (error) {
+      console.error("Erro ao atualizar tarefa:", error);
+      addToast("Erro ao atualizar tarefa!", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateList = async (listName) => {
+    setLoading(true);
+    try {
+      const response = await listService.createList(listName);
+      const newList = response.data.data;
+      setUserLists((prevLists) => [...prevLists, newList]);
+      addToast(`Lista "${listName}" criada com sucesso!`, "success");
+      setActiveView(newList.id);
+    } catch (error) {
+      console.error("Erro ao criar a lista:", error);
+      addToast(
+        error.response?.data?.error || "Erro ao criar a lista:",
+        "error",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getFilteredTasks = () => {
+    const today = new Date().toDateString();
+
+    switch (activeView) {
+      case "today":
+        return tasks.filter(
+          (t) => new Date(t.createdAt).toDateString() === today,
+        );
+      case "important":
+        return tasks.filter((t) => t.important);
+      case "planned":
+        return tasks.filter((t) => t.dueDate);
+      case "assigned":
+        return tasks.filter((t) => t.userId);
+      case userLists.find((list) => list.id === activeView)?.id:
+        return tasks.filter((t) => t.listId === activeView);
+      default:
+        return tasks;
+    }
+  };
+
+  const filteredTasks = getFilteredTasks();
+  const activeTasks = filteredTasks.filter((t) => t.status !== "completed");
+  const completedTasks = filteredTasks.filter((t) => t.status === "completed");
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
         </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Nova Tarefa</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleCreateTask} className="flex gap2">
-              <Input
-                value={newTask}
-                onChange={(e) => setNewTask(e.target.value)}
-                placeholder="Digite sua tarefa..."
-                className="flex-1"
-              />
-              <Button type="submit" disabled={loading}>
-                {loading ? "Criando" : "Criar"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Suas Tarefas ({tasks.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {tasks.length === 0 ? (
-              <p className="text-gray-600 text-center py-4">
-                Nenhuma tarefa encontrada. Crie sua primeira tarefa!
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {tasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className={`flex items-center gap-3 p-3 border rouded-lg ${
-                      task.status === "completed"
-                        ? "bg-green-50 border-green-200"
-                        : "bg-white border-gray-200"
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={task.status === "completed"}
-                      onChange={() => toggleTaskStatus(task)}
-                      className="w-4 h-4"
-                    />
-                    <span
-                      className={`flex-1 ${
-                        task.status === "completed"
-                          ? "line-through text-gray-500"
-                          : "text-gray-900"
-                      }`}
-                    >
-                      {task.title}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {new Date(task.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
-    </Layout>
+    );
+  }
+
+  return (
+    <div className="flex h-screen">
+      <Sidebar
+        activeView={activeView}
+        setActiveView={setActiveView}
+        showSidebar={showSidebar}
+        setShowSidebar={setShowSidebar}
+        showMobileSidebar={showMobileSidebar}
+        setShowMobileSidebar={setShowMobileSidebar}
+        userLists={userLists}
+        onCreatelist={handleCreateList}
+        user={user}
+        logout={logout}
+      />
+
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="lg:hidden flex items-center justify-between p-4 bg-card border-b">
+          <Button
+            onClick={() => setShowMobileSidebar(true)}
+            size="sm"
+            variant="ghost"
+          >
+            <Menu className="w-6 h-6" />
+          </Button>
+          <h1 className="text-xl font-bold gradient-text">To Do List</h1>
+          <div className="w-10" />
+        </div>
+        <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
+          <div className="max-w-4xl mx-auto space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-3xl font-bold gradient-text">
+                  {(() => {
+                    const activeUserList = userLists.find(
+                      (list) => list.id === activeView,
+                    );
+                    if (activeUserList) return activeUserList.name;
+                    switch (activeView) {
+                      case "tasks":
+                        return "Tarefas";
+                      case "today":
+                        return "O Meu Dia";
+                      case "important":
+                        return "Importantes";
+                      case "planned":
+                        return "Planejado";
+                      case "assigned":
+                        return "Atribuído a mim";
+                      default:
+                        return "Tarefas";
+                    }
+                  })()}
+                </h2>
+                <p className="text-muted-foreground mt-1">
+                  {activeTasks.length} ativas ● {completedTasks.length}
+                  {""}
+                  concluídas
+                </p>
+              </div>
+            </div>
+            <SearchFilter onSearch={handleSearch} tags={allTags} />
+            <TaskForm onsubmit={handleCreateTask} loading={loading} />
+            {activeView === "planned" ? (
+              <PlannedView
+                tasks={tasks}
+                onToggleStatus={toggleTaskStatus}
+                onToggleImportant={handleToggleImportant}
+                onDelete={handleDeleteTask}
+                onSelectTask={setSelectedTask}
+                onToggleSubtask={handleToggleSubtask}
+                onEditTask={setEditingTask}
+                activeView={activeView}
+              />
+            ) : (
+              <TaskList
+                tasks={filteredTasks}
+                onToggleStatus={toggleTaskStatus}
+                onToggleImportant={handleToggleImportant}
+                onDelete={handleDeleteTask}
+                onSelectTask={setSelectedTask}
+                onToggleSubtask={handleToggleSubtask}
+                onEditTask={setEditingTask}
+                activeView={activeView}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+      {editingTask && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end lg:items-center justify-center p-4">
+          <div className="w-full max-w-md">
+            <TaskEditForm
+              task={editingTask}
+              onSave={handleEditTask}
+              userLists={userLists}
+              onCancel={() => setEditingTask(null)}
+              loading={loading}
+            />
+          </div>
+        </div>
+      )}
+      {selectedTask && (
+        <TaskDetails
+          task={selectedTask}
+          onClose={() => {
+            setSelectedTask(null);
+            loadTasks();
+          }}
+          onUpdate={loadTasks}
+          onToggleSubtask={handleToggleSubtask}
+        />
+      )}
+    </div>
   );
 };
 

@@ -19,7 +19,7 @@ export const create = async (userId, data) => {
                 if (!tag)
                   tag = await prisma.tag.create({ data: { name: tagName } });
                 return { tagId: tag.id };
-              })
+              }),
             ),
           }
         : undefined,
@@ -34,6 +34,20 @@ export const create = async (userId, data) => {
   return task;
 };
 export const getAll = (userId) => repository.findByUser(userId);
+
+export const search = (userId, filters) => {
+  const parsedFilters = {
+    title: filters.title || "",
+    listId: filters.listId,
+    tagIds: filters.tagIds ? JSON.parse(filters.tagIds) : [],
+    dueDateFrom: filters.dueDateFrom,
+    dueDateTo: filters.dueDateTo,
+    priority: filters.priority ? parseInt(filters.priority) : undefined,
+    status: filters.status,
+  };
+  return repository.search(userId, parsedFilters);
+};
+
 export const getById = async (id, userId) => {
   const task = await repository.findById(parseInt(id), userId);
   if (!task) throw new AppError("Tarefa não encontrada", 404);
@@ -42,6 +56,13 @@ export const getById = async (id, userId) => {
 export const update = async (id, userId, data) => {
   await getById(id, userId);
   const { tags, subtasks, ...taskData } = data;
+
+  Object.keys(taskData).forEach((key) => {
+    if (taskData[key] === "") {
+      taskData[key] = null;
+    }
+  });
+
   return prisma.task.update({
     where: { id: parseInt(id) },
     data: {
@@ -57,7 +78,7 @@ export const update = async (id, userId, data) => {
                 if (!tag)
                   tag = await prisma.tag.create({ data: { name: tagName } });
                 return { tagId: tag.id };
-              })
+              }),
             ),
           }
         : undefined,

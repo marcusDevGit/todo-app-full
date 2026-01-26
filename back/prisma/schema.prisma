@@ -21,6 +21,7 @@ model User {
   createdAt DateTime @default(now())
 
   tasks Task[]
+  list List[]
 }
 
 model Task {
@@ -28,8 +29,15 @@ model Task {
   title       String
   description String?
   dueDate     DateTime?
+  reminderDate DateTime?
+  reminderFrequency String? @default("once")
+  reminderTime String?
+  lastReminderSent DateTime?
   status      String    @default("pending")
   priority    Int       @default(0)
+  listId      Int?
+  list        List?     @relation(fields: [listId], references: [id], onDelete: SetNull)
+  important   Boolean   @default(false)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -43,10 +51,21 @@ model Task {
   parent      Task?        @relation("Subtasks", fields: [parentId], references: [id])
 }
 
+model List {
+  id        Int      @id @default(autoincrement())
+  name      String
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks     Task[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+}
+
 model Tag {
   id    Int     @id @default(autoincrement())
   name  String
-  color String?
+  color String? @default("#3b82f6")
 
   tasks TaskTag[]
 }

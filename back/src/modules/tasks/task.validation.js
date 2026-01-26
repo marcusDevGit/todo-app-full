@@ -24,6 +24,17 @@ export const createTask = [
     .withMessage("Prioridade deve ser entre 0 e 5"),
   body("tags").optional().isArray().withMessage("Tags deve ser um array"),
   body("tags.*").optional().isString().withMessage("Tag deve ser string"),
+  body("listId")
+    .optional()
+    .custom((value) => {
+      if (value === null) {
+        return true; // Permite null
+      }
+      if (!Number.isInteger(value)) {
+        throw new Error("listId deve ser um número inteiro ou nulo");
+      }
+      return true;
+    }),
 ];
 
 export const updateTask = [
@@ -47,4 +58,15 @@ export const updateTask = [
     .optional()
     .isInt({ min: 0, max: 5 })
     .withMessage("Prioridade deve ser entre 0 e 5"),
+  body("listId")
+    .optional()
+    .custom((value) => {
+      if (value === null) {
+        return true; // Permite null
+      }
+      if (!Number.isInteger(value)) {
+        throw new Error("listId deve ser um número inteiro ou nulo");
+      }
+      return true;
+    }),
 ];
